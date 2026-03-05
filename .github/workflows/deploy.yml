@@ -1,0 +1,41 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ['Build & Push Docker Images']
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/eventpulse
+            git pull origin main
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+            echo "✓ Deployment complete"
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f "${{ secrets.DEPLOY_URL }}/api/health" || exit 1
+          echo "✓ Health check passed"

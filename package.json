@@ -1,0 +1,33 @@
+{
+  "name": "eventpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventPulse — Real-time Event Management Platform",
+  "author": "EventPulse Team",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "clean": "turbo run clean && rimraf node_modules",
+    "docker:dev": "docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.5.0"
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@eventpulse/shared-types": ["../../libs/shared-types/src"],
+      "@eventpulse/common": ["../../libs/common/src"],
+      "@eventpulse/kafka-common": ["../../libs/kafka-common/src"]
+    }
+  },
+  "include": ["src/**/*"]
+}
