@@ -8,6 +8,7 @@ import { Input } from '@/components/atoms/Input.js';
 import { Textarea } from '@/components/atoms/Textarea.js';
 import { Button } from '@/components/atoms/Button.js';
 import { ROUTES } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
 
 const tierSchema = z.object({
   name: z.string().min(1, 'Tier name required'),
@@ -56,47 +57,70 @@ export function EventCreatePage(): JSX.Element {
 
   function onSubmit(data: EventFormData): void {
     const tagsArray = data.tags
-      ? data.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      ? data.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
       : [];
 
     createEvent.mutate(
       {
-        ...data,
+        title: data.title,
+        description: data.description,
+        categoryId: data.categoryId,
+        visibility: 'public' as const,
+        venue: {
+          name: data.venue ?? '',
+          address: data.address ?? '',
+          latitude: 0,
+          longitude: 0,
+          isOnline: data.isOnline,
+        },
+        startsAt: data.startDate,
+        endsAt: data.endDate,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        maxCapacity: data.maxAttendees,
         tags: tagsArray,
-      } as Parameters<typeof createEvent.mutate>[0],
+        ticketTiers: data.tiers.map((t) => ({
+          name: t.name,
+          description: t.description,
+          price: t.price,
+          capacity: t.quantity,
+        })),
+      },
       {
         onSuccess: (result) => {
           navigate(`${ROUTES.EVENTS}/${result.id}`);
         },
-      }
+      },
     );
   }
 
   return (
     <div className="container-app max-w-3xl py-8">
-      <h1 className="mb-8 text-2xl font-bold text-secondary-900">Create New Event</h1>
+      <h1 className="mb-8 text-2xl font-bold text-secondary-900">{t('eventCreate.title')}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Basic Info */}
         <section className="card space-y-4">
-          <h2 className="text-lg font-semibold text-secondary-900">Basic Information</h2>
+          <h2 className="text-lg font-semibold text-secondary-900">{t('eventCreate.basicInfo')}</h2>
           <Input
-            label="Event Title"
-            placeholder="My Awesome Conference"
+            label={t('eventCreate.eventTitle')}
+            placeholder={t('eventCreate.eventTitlePlaceholder')}
             error={errors.title?.message}
             {...register('title')}
           />
           <Textarea
-            label="Description"
+            label={t('eventCreate.description')}
             rows={5}
-            placeholder="Tell people what your event is about..."
+            placeholder={t('eventCreate.descriptionPlaceholder')}
             error={errors.description?.message}
             {...register('description')}
           />
           <div>
-            <label className="label">Category</label>
+            <label className="label">{t('eventCreate.category')}</label>
             <select className="input-field" {...register('categoryId')}>
-              <option value="">Select a category</option>
+              <option value="">{t('eventCreate.selectCategory')}</option>
               {categories?.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -108,8 +132,8 @@ export function EventCreatePage(): JSX.Element {
             )}
           </div>
           <Input
-            label="Tags"
-            placeholder="react, conference, tech (comma separated)"
+            label={t('eventCreate.tags')}
+            placeholder={t('eventCreate.tagsPlaceholder')}
             error={errors.tags?.message}
             {...register('tags')}
           />
@@ -117,16 +141,18 @@ export function EventCreatePage(): JSX.Element {
 
         {/* Date & Location */}
         <section className="card space-y-4">
-          <h2 className="text-lg font-semibold text-secondary-900">Date & Location</h2>
+          <h2 className="text-lg font-semibold text-secondary-900">
+            {t('eventCreate.dateLocation')}
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Start Date & Time"
+              label={t('eventCreate.startDateTime')}
               type="datetime-local"
               error={errors.startDate?.message}
               {...register('startDate')}
             />
             <Input
-              label="End Date & Time"
+              label={t('eventCreate.endDateTime')}
               type="datetime-local"
               error={errors.endDate?.message}
               {...register('endDate')}
@@ -139,26 +165,26 @@ export function EventCreatePage(): JSX.Element {
               className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
               {...register('isOnline')}
             />
-            <span className="text-sm text-secondary-700">This is an online event</span>
+            <span className="text-sm text-secondary-700">{t('eventCreate.onlineEvent')}</span>
           </label>
 
           {!isOnline && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
-                label="Venue Name"
-                placeholder="Convention Center"
+                label={t('eventCreate.venueName')}
+                placeholder={t('eventCreate.venueNamePlaceholder')}
                 {...register('venue')}
               />
               <Input
-                label="Address"
-                placeholder="123 Main St, City"
+                label={t('eventCreate.address')}
+                placeholder={t('eventCreate.addressPlaceholder')}
                 {...register('address')}
               />
             </div>
           )}
 
           <Input
-            label="Max Attendees"
+            label={t('eventCreate.maxAttendees')}
             type="number"
             placeholder="500"
             error={errors.maxAttendees?.message}
@@ -169,17 +195,17 @@ export function EventCreatePage(): JSX.Element {
         {/* Ticket Tiers */}
         <section className="card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-secondary-900">Ticket Tiers</h2>
+            <h2 className="text-lg font-semibold text-secondary-900">
+              {t('eventCreate.ticketTiers')}
+            </h2>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               leftIcon={<Plus className="h-4 w-4" />}
-              onClick={() =>
-                append({ name: '', price: 0, quantity: 50, description: '' })
-              }
+              onClick={() => append({ name: '', price: 0, quantity: 50, description: '' })}
             >
-              Add Tier
+              {t('eventCreate.addTier')}
             </Button>
           </div>
 
@@ -188,13 +214,10 @@ export function EventCreatePage(): JSX.Element {
           )}
 
           {fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="rounded-lg border border-secondary-200 p-4 space-y-3"
-            >
+            <div key={field.id} className="rounded-lg border border-secondary-200 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-secondary-700">
-                  Tier {index + 1}
+                  {t('eventCreate.tierNumber', { n: index + 1 })}
                 </h3>
                 {fields.length > 1 && (
                   <button
@@ -208,13 +231,13 @@ export function EventCreatePage(): JSX.Element {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <Input
-                  label="Name"
-                  placeholder="VIP"
+                  label={t('eventCreate.tierName')}
+                  placeholder={t('eventCreate.tierNamePlaceholder')}
                   error={errors.tiers?.[index]?.name?.message}
                   {...register(`tiers.${index}.name`)}
                 />
                 <Input
-                  label="Price ($)"
+                  label={t('eventCreate.tierPrice')}
                   type="number"
                   step="0.01"
                   placeholder="0.00"
@@ -222,7 +245,7 @@ export function EventCreatePage(): JSX.Element {
                   {...register(`tiers.${index}.price`)}
                 />
                 <Input
-                  label="Quantity"
+                  label={t('eventCreate.tierQuantity')}
                   type="number"
                   placeholder="100"
                   error={errors.tiers?.[index]?.quantity?.message}
@@ -230,8 +253,8 @@ export function EventCreatePage(): JSX.Element {
                 />
               </div>
               <Input
-                label="Description (optional)"
-                placeholder="What's included in this tier?"
+                label={t('eventCreate.tierDescription')}
+                placeholder={t('eventCreate.tierDescriptionPlaceholder')}
                 {...register(`tiers.${index}.description`)}
               />
             </div>
@@ -239,19 +262,11 @@ export function EventCreatePage(): JSX.Element {
         </section>
 
         <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => navigate(-1)}
-          >
-            Cancel
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+            {t('common.cancel')}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={createEvent.isPending}
-          >
-            Create Event
+          <Button type="submit" variant="primary" isLoading={createEvent.isPending}>
+            {t('nav.createEvent')}
           </Button>
         </div>
       </form>

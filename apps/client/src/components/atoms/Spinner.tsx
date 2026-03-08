@@ -1,5 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { classNames } from '@/lib/utils.js';
+import { t } from '@/lib/i18n.js';
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -14,9 +15,7 @@ const sizeStyles = {
 
 export function Spinner({ size = 'md', className }: SpinnerProps): JSX.Element {
   return (
-    <Loader2
-      className={classNames('animate-spin text-primary-600', sizeStyles[size], className)}
-    />
+    <Loader2 className={classNames('animate-spin text-primary-600', sizeStyles[size], className)} />
   );
 }
 
@@ -24,7 +23,7 @@ interface LoadingScreenProps {
   message?: string;
 }
 
-export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps): JSX.Element {
+export function LoadingScreen({ message = t('common.loading') }: LoadingScreenProps): JSX.Element {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-3">
       <Spinner size="lg" />

@@ -3,6 +3,7 @@ import { EventCard } from '@/components/molecules/EventCard.js';
 import { Spinner } from '@/components/atoms/Spinner.js';
 import { EmptyState } from '@/components/atoms/EmptyState.js';
 import { Calendar } from 'lucide-react';
+import { t } from '@/lib/i18n.js';
 
 interface EventListProps {
   events: IEvent[] | undefined;
@@ -17,8 +18,8 @@ export function EventList({
   events,
   isLoading,
   isError = false,
-  emptyTitle = 'No events found',
-  emptyDescription = 'Try adjusting your filters or check back later.',
+  emptyTitle = t('events.noEventsFound'),
+  emptyDescription = t('events.adjustFilters'),
   columns = 3,
 }: EventListProps): JSX.Element {
   if (isLoading) {
@@ -33,8 +34,8 @@ export function EventList({
     return (
       <div className="py-12">
         <EmptyState
-          title="Something went wrong"
-          description="Failed to load events. Please try again."
+          title={t('events.somethingWentWrong')}
+          description={t('events.loadFailed')}
           icon={<Calendar className="h-12 w-12 text-secondary-400" />}
         />
       </div>

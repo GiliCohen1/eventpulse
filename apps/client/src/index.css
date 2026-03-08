@@ -9,6 +9,12 @@
 
   body {
     @apply min-h-screen bg-white text-secondary-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Improved focus-visible for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
 }
 
@@ -18,26 +24,30 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors
+    @apply inline-flex items-center justify-center rounded-lg font-medium
+      transition-all duration-200 ease-in-out
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
-      focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+      focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+      active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply btn bg-primary-600 px-4 py-2 text-white hover:bg-primary-700;
+    @apply btn bg-primary-600 px-4 py-2 text-white
+      hover:bg-primary-700 hover:shadow-md hover:shadow-primary-600/25;
   }
 
   .btn-secondary {
     @apply btn border border-secondary-300 bg-white px-4 py-2 text-secondary-700
-      hover:bg-secondary-50;
+      hover:bg-secondary-50 hover:border-secondary-400;
   }
 
   .btn-danger {
-    @apply btn bg-error-600 px-4 py-2 text-white hover:bg-error-700;
+    @apply btn bg-error-600 px-4 py-2 text-white
+      hover:bg-error-700 hover:shadow-md hover:shadow-error-600/25;
   }
 
   .btn-ghost {
-    @apply btn px-4 py-2 text-secondary-600 hover:bg-secondary-100;
+    @apply btn px-4 py-2 text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900;
   }
 
   .btn-sm {
@@ -49,18 +59,22 @@
   }
 
   .input-field {
-    @apply w-full rounded-lg border border-secondary-300 px-3 py-2 text-sm
-      placeholder:text-secondary-400 focus:border-primary-500 focus:outline-none
-      focus:ring-2 focus:ring-primary-500/20 disabled:bg-secondary-50
+    @apply w-full rounded-lg border border-secondary-300 bg-white px-3 py-2.5 text-sm
+      placeholder:text-secondary-400
+      transition-colors duration-200
+      focus:border-primary-500 focus:outline-none
+      focus:ring-2 focus:ring-primary-500/20
+      disabled:cursor-not-allowed disabled:bg-secondary-50
       disabled:text-secondary-500;
   }
 
   .label {
-    @apply mb-1 block text-sm font-medium text-secondary-700;
+    @apply mb-1.5 block text-sm font-medium text-secondary-700;
   }
 
   .card {
-    @apply rounded-xl border border-secondary-200 bg-white shadow-sm;
+    @apply rounded-xl border border-secondary-200 bg-white p-5 shadow-sm
+      transition-shadow duration-200;
   }
 
   .badge {
@@ -81,5 +95,84 @@
 
   .badge-error {
     @apply badge bg-error-100 text-error-700;
+  }
+}
+
+@layer components {
+  /* Notification item */
+  .notification-item {
+    @apply flex items-start gap-3 rounded-lg border p-3 transition-colors
+      border-secondary-100 bg-white;
+  }
+
+  .notification-item--unread {
+    @apply border-primary-100 bg-primary-50;
+  }
+
+  /* Role selector option */
+  .role-option {
+    @apply flex cursor-pointer items-center gap-2 rounded-lg border p-3
+      text-sm font-medium transition-colors
+      border-secondary-300 text-secondary-600 hover:border-secondary-400;
+  }
+
+  .role-option--selected {
+    @apply border-primary-500 bg-primary-50 text-primary-700;
+  }
+
+  /* Chat message bubble */
+  .message-bubble {
+    @apply inline-block rounded-2xl px-4 py-2 text-sm
+      bg-secondary-100 text-secondary-900;
+  }
+
+  .message-bubble--own {
+    @apply bg-primary-600 text-white;
+  }
+
+  /* Stat trend indicator */
+  .stat-trend--up {
+    @apply text-xs font-medium text-success-600;
+  }
+
+  .stat-trend--down {
+    @apply text-xs font-medium text-error-600;
+  }
+}
+
+@layer utilities {
+  /* Smooth animated entrance */
+  .animate-in {
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

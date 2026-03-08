@@ -10,7 +10,9 @@ import { MongooseModule } from '@nestjs/mongoose';
       useFactory: (config: ConfigService) => {
         const uri = config.get<string>('MONGO_URI', 'mongodb://localhost:27017');
         const dbName = config.get<string>('MONGO_DB_ANALYTICS', 'eventpulse_analytics');
-        return { uri: `${uri}/${dbName}` };
+        const url = new URL(uri);
+        url.pathname = '/' + dbName;
+        return { uri: url.toString() };
       },
     }),
   ],

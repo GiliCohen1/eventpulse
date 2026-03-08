@@ -14,7 +14,6 @@ import { CurrentUser } from '@eventpulse/common';
 import type { CurrentUserPayload } from '@eventpulse/common';
 import { RegistrationsService } from './registrations.service.js';
 import { CreateRegistrationDto } from './dto/create-registration.dto.js';
-import { CheckInDto } from './dto/check-in.dto.js';
 import type { Registration } from './entities/registration.entity.js';
 import type { Ticket } from '../qr-codes/entities/ticket.entity.js';
 

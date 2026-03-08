@@ -14,24 +14,30 @@ export class ProxyController {
   private readonly serviceRoutes: ServiceRoute[];
 
   constructor(private readonly configService: ConfigService) {
-    const userServicePort = this.configService.get('USER_SERVICE_PORT', '3001');
-    const eventServicePort = this.configService.get('EVENT_SERVICE_PORT', '3002');
-    const ticketServicePort = this.configService.get('TICKET_SERVICE_PORT', '3003');
-    const chatServicePort = this.configService.get('CHAT_SERVICE_PORT', '3004');
-    const notificationServicePort = this.configService.get('NOTIFICATION_SERVICE_PORT', '3005');
-    const analyticsServicePort = this.configService.get('ANALYTICS_SERVICE_PORT', '3006');
+    const userServiceUrl = this.configService.get('USER_SERVICE_URL', 'http://localhost:3001');
+    const eventServiceUrl = this.configService.get('EVENT_SERVICE_URL', 'http://localhost:3002');
+    const ticketServiceUrl = this.configService.get('TICKET_SERVICE_URL', 'http://localhost:3003');
+    const chatServiceUrl = this.configService.get('CHAT_SERVICE_URL', 'http://localhost:3004');
+    const notificationServiceUrl = this.configService.get(
+      'NOTIFICATION_SERVICE_URL',
+      'http://localhost:3005',
+    );
+    const analyticsServiceUrl = this.configService.get(
+      'ANALYTICS_SERVICE_URL',
+      'http://localhost:3006',
+    );
 
     this.serviceRoutes = [
-      { prefix: '/auth', target: `http://localhost:${userServicePort}` },
-      { prefix: '/users', target: `http://localhost:${userServicePort}` },
-      { prefix: '/organizations', target: `http://localhost:${userServicePort}` },
-      { prefix: '/events', target: `http://localhost:${eventServicePort}` },
-      { prefix: '/categories', target: `http://localhost:${eventServicePort}` },
-      { prefix: '/registrations', target: `http://localhost:${ticketServicePort}` },
-      { prefix: '/tickets', target: `http://localhost:${ticketServicePort}` },
-      { prefix: '/chat', target: `http://localhost:${chatServicePort}` },
-      { prefix: '/notifications', target: `http://localhost:${notificationServicePort}` },
-      { prefix: '/analytics', target: `http://localhost:${analyticsServicePort}` },
+      { prefix: '/auth', target: userServiceUrl },
+      { prefix: '/users', target: userServiceUrl },
+      { prefix: '/organizations', target: userServiceUrl },
+      { prefix: '/events', target: eventServiceUrl },
+      { prefix: '/categories', target: eventServiceUrl },
+      { prefix: '/registrations', target: ticketServiceUrl },
+      { prefix: '/tickets', target: ticketServiceUrl },
+      { prefix: '/chat', target: chatServiceUrl },
+      { prefix: '/notifications', target: notificationServiceUrl },
+      { prefix: '/analytics', target: analyticsServiceUrl },
     ];
   }
 

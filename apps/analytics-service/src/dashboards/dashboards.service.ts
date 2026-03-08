@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AggregationsService } from '../aggregations/aggregations.service.js';
 import { TrackingService } from '../tracking/tracking.service.js';
 
@@ -68,8 +68,6 @@ export interface OrganizerDashboard {
 
 @Injectable()
 export class DashboardsService {
-  private readonly logger = new Logger(DashboardsService.name);
-
   constructor(
     private readonly aggregationsService: AggregationsService,
     private readonly trackingService: TrackingService,

@@ -3,12 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {
-      "@eventpulse/shared-types": ["../../libs/shared-types/src"],
-      "@eventpulse/common": ["../../libs/common/src"],
-      "@eventpulse/kafka-common": ["../../libs/kafka-common/src"]
-    }
+    "baseUrl": "."
   },
   "include": ["src/**/*"]
 }

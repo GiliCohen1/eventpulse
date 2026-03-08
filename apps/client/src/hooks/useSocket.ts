@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { WS_URL } from '@/lib/constants.js';
 import { useAuthStore } from '@/stores/auth.store.js';
@@ -20,6 +20,7 @@ interface UseSocketReturn {
 export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const { autoConnect = true } = options;
   const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const tokens = useAuthStore((state) => state.tokens);
 
   useEffect(() => {
@@ -34,20 +35,17 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.info('[WS] Connected:', socket.id);
+      setIsConnected(true);
     });
 
-    socket.on('disconnect', (reason) => {
-      console.info('[WS] Disconnected:', reason);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('[WS] Connection error:', error.message);
+    socket.on('disconnect', () => {
+      setIsConnected(false);
     });
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
+      setIsConnected(false);
     };
   }, [autoConnect, tokens?.accessToken]);
 
@@ -77,7 +75,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 
   return {
     socket: socketRef.current,
-    isConnected: socketRef.current?.connected ?? false,
+    isConnected,
     emit,
     on,
     off,

@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Wifi } from 'lucide-react';
 import { Badge } from '@/components/atoms/Badge.js';
 import { formatDateTime, formatCurrency, classNames } from '@/lib/utils.js';
-import { ROUTES, EVENT_STATUS_LABELS } from '@/lib/constants.js';
+import { ROUTES } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
 import type { IEvent } from '@/types';
 
 interface EventCardProps {
@@ -27,13 +28,15 @@ function getStatusVariant(status: string): 'primary' | 'success' | 'warning' | '
 
 export function EventCard({ event, className }: EventCardProps): JSX.Element {
   const lowestPrice = 0; // Would compute from tiers
-  const locationText = event.isOnline ? 'Online Event' : event.venueName ?? 'Location TBD';
+  const locationText = event.isOnline
+    ? t('common.onlineEvent')
+    : (event.venueName ?? t('common.locationTBD'));
 
   return (
     <Link
       to={ROUTES.EVENT_DETAIL(event.id)}
       className={classNames(
-        'card group block overflow-hidden transition-shadow hover:shadow-md',
+        'card group block overflow-hidden !p-0 transition-all hover:shadow-md hover:-translate-y-0.5',
         className,
       )}
     >
@@ -51,7 +54,7 @@ export function EventCard({ event, className }: EventCardProps): JSX.Element {
         )}
         <div className="absolute left-3 top-3">
           <Badge variant={getStatusVariant(event.status)}>
-            {EVENT_STATUS_LABELS[event.status] ?? event.status}
+            {t(`eventStatus.${event.status}`) ?? event.status}
           </Badge>
         </div>
       </div>
@@ -81,12 +84,10 @@ export function EventCard({ event, className }: EventCardProps): JSX.Element {
               <Users className="h-4 w-4 flex-shrink-0" />
               <span>
                 {event.registeredCount}
-                {event.maxCapacity ? ` / ${event.maxCapacity}` : ''} attending
+                {event.maxCapacity ? ` / ${event.maxCapacity}` : ''} {t('common.attending')}
               </span>
             </div>
-            <span className="font-semibold text-primary-600">
-              {formatCurrency(lowestPrice)}
-            </span>
+            <span className="font-semibold text-primary-600">{formatCurrency(lowestPrice)}</span>
           </div>
         </div>
       </div>

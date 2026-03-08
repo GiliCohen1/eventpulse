@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  Users,
-  DollarSign,
-  Calendar,
-  TrendingUp,
-  BarChart3,
-} from 'lucide-react';
+import { Users, DollarSign, Calendar, TrendingUp } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -20,8 +14,19 @@ import {
 } from 'recharts';
 import { analyticsService } from '@/services/analytics.service.js';
 import { LoadingScreen } from '@/components/atoms/Spinner.js';
-import { QUERY_KEYS } from '@/lib/constants.js';
-import { formatCurrency, formatCount } from '@/lib/utils.js';
+import { formatCurrency, formatCount, classNames } from '@/lib/utils.js';
+import { t } from '@/lib/i18n.js';
+
+interface DashboardData {
+  stats: {
+    totalEvents: number;
+    totalAttendees: number;
+    totalRevenue: number;
+    conversionRate: number;
+  };
+  registrationTimeline: Array<{ date: string; count: number }>;
+  trafficSources: Array<{ source: string; count: number }>;
+}
 
 const CHART_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -43,11 +48,7 @@ function StatCard({ label, value, change, icon, trend }: StatCardProps): JSX.Ele
         <p className="text-sm text-secondary-500">{label}</p>
         <p className="text-2xl font-bold text-secondary-900">{value}</p>
         {change && (
-          <p
-            className={`text-xs font-medium ${
-              trend === 'up' ? 'text-success-600' : 'text-error-600'
-            }`}
-          >
+          <p className={classNames(trend === 'up' ? 'stat-trend--up' : 'stat-trend--down')}>
             {change}
           </p>
         )}
@@ -57,12 +58,12 @@ function StatCard({ label, value, change, icon, trend }: StatCardProps): JSX.Ele
 }
 
 export function DashboardPage(): JSX.Element {
-  const { data: dashboard, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.dashboard(),
-    queryFn: () => analyticsService.getDashboard(),
+  const { data: dashboard, isLoading } = useQuery<DashboardData>({
+    queryKey: ['analytics', 'dashboard'],
+    queryFn: () => analyticsService.getDashboard() as Promise<DashboardData>,
   });
 
-  if (isLoading) return <LoadingScreen message="Loading dashboard..." />;
+  if (isLoading) return <LoadingScreen message={t('dashboard.loading')} />;
 
   const stats = dashboard?.stats;
   const registrationTimeline = dashboard?.registrationTimeline ?? [];
@@ -71,33 +72,33 @@ export function DashboardPage(): JSX.Element {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-secondary-900">Dashboard</h1>
-        <p className="mt-1 text-secondary-500">Overview of your events and performance</p>
+        <h1 className="text-2xl font-bold text-secondary-900">{t('dashboard.title')}</h1>
+        <p className="mt-1 text-secondary-500">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total Events"
+          label={t('dashboard.totalEvents')}
           value={formatCount(stats?.totalEvents ?? 0)}
           icon={<Calendar className="h-6 w-6" />}
         />
         <StatCard
-          label="Total Attendees"
+          label={t('dashboard.totalAttendees')}
           value={formatCount(stats?.totalAttendees ?? 0)}
-          change="+12% this month"
+          change={t('dashboard.attendeesGrowth')}
           trend="up"
           icon={<Users className="h-6 w-6" />}
         />
         <StatCard
-          label="Total Revenue"
+          label={t('dashboard.totalRevenue')}
           value={formatCurrency(stats?.totalRevenue ?? 0)}
-          change="+8% this month"
+          change={t('dashboard.revenueGrowth')}
           trend="up"
           icon={<DollarSign className="h-6 w-6" />}
         />
         <StatCard
-          label="Conversion Rate"
+          label={t('dashboard.conversionRate')}
           value={`${stats?.conversionRate ?? 0}%`}
           icon={<TrendingUp className="h-6 w-6" />}
         />
@@ -108,7 +109,7 @@ export function DashboardPage(): JSX.Element {
         {/* Registration Timeline */}
         <div className="card">
           <h2 className="mb-4 text-lg font-semibold text-secondary-900">
-            Registration Trend
+            {t('dashboard.registrationTrend')}
           </h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -133,7 +134,7 @@ export function DashboardPage(): JSX.Element {
         {/* Traffic Sources */}
         <div className="card">
           <h2 className="mb-4 text-lg font-semibold text-secondary-900">
-            Traffic Sources
+            {t('dashboard.trafficSources')}
           </h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -145,16 +146,16 @@ export function DashboardPage(): JSX.Element {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ source, percent }) =>
-                    `${source} (${(percent * 100).toFixed(0)}%)`
-                  }
+                  label={({ source, percent }) => `${source} (${(percent * 100).toFixed(0)}%)`}
                 >
-                  {trafficSources.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={CHART_COLORS[index % CHART_COLORS.length]}
-                    />
-                  ))}
+                  {trafficSources.map(
+                    (_entry: { source: string; count: number }, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                      />
+                    ),
+                  )}
                 </Pie>
                 <Tooltip />
               </PieChart>

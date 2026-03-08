@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/templates/MainLayout.js';
 import { AuthLayout } from '@/components/templates/AuthLayout.js';
 import { DashboardLayout } from '@/components/templates/DashboardLayout.js';
@@ -66,8 +66,17 @@ export function AppRoutes(): JSX.Element {
           }
         />
 
-        {/* 404 */}
-        <Route path="*" element={<NotFoundPage />} />
+        {/* Organizer: My Events under main layout for non-dashboard access */}
+        <Route
+          path={ROUTES.MY_EVENTS}
+          element={
+            <AuthGuard>
+              <OrganizerGuard>
+                <MyEventsPage />
+              </OrganizerGuard>
+            </AuthGuard>
+          }
+        />
       </Route>
 
       {/* Auth routes (guest only) */}
@@ -93,7 +102,13 @@ export function AppRoutes(): JSX.Element {
         }
       >
         <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-        <Route path={ROUTES.MY_EVENTS} element={<MyEventsPage />} />
+        <Route path={`${ROUTES.DASHBOARD}/analytics`} element={<DashboardPage />} />
+        <Route path={`${ROUTES.DASHBOARD}/settings`} element={<ProfilePage />} />
+      </Route>
+
+      {/* Global 404 catch-all */}
+      <Route element={<MainLayout />}>
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );

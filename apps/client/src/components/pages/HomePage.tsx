@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, MapPin, TrendingUp } from 'lucide-react';
+import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/atoms/Button.js';
 import { Spinner } from '@/components/atoms/Spinner.js';
 import { EventList } from '@/components/organisms/EventList.js';
 import { useTrendingEvents, useCategories } from '@/hooks/useEvents.js';
 import { ROUTES } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
 import { type ICategory } from '@eventpulse/shared-types';
 
 function CategoryCard({ category }: { category: ICategory }): JSX.Element {
@@ -36,25 +37,31 @@ export function HomePage(): JSX.Element {
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm backdrop-blur">
               <Sparkles className="h-4 w-4" />
-              Discover amazing events near you
+              {t('home.heroChip')}
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              Your Next Great
+              {t('home.heroTitleLine1')}
               <br />
-              Experience Awaits
+              {t('home.heroTitleLine2')}
             </h1>
-            <p className="mt-6 text-lg text-primary-100">
-              Find conferences, workshops, meetups and more. Register instantly, chat with attendees, and never miss a moment.
-            </p>
+            <p className="mt-6 text-lg text-primary-100">{t('home.heroDescription')}</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link to={ROUTES.EVENTS}>
-                <Button variant="secondary" size="lg" rightIcon={<ArrowRight className="h-5 w-5" />}>
-                  Explore Events
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  rightIcon={<ArrowRight className="h-5 w-5" />}
+                >
+                  {t('home.exploreEvents')}
                 </Button>
               </Link>
               <Link to={ROUTES.REGISTER}>
-                <Button variant="ghost" size="lg" className="!text-white border-white/30 hover:bg-white/10">
-                  Create Account
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="!text-white border-white/30 hover:bg-white/10"
+                >
+                  {t('home.createAccount')}
                 </Button>
               </Link>
             </div>
@@ -66,8 +73,8 @@ export function HomePage(): JSX.Element {
       <section className="container-app py-16">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-secondary-900">Browse Categories</h2>
-            <p className="mt-1 text-secondary-500">Find events that match your interests</p>
+            <h2 className="text-2xl font-bold text-secondary-900">{t('home.browseCategories')}</h2>
+            <p className="mt-1 text-secondary-500">{t('home.categoriesSubtitle')}</p>
           </div>
         </div>
         {categoriesLoading ? (
@@ -90,15 +97,15 @@ export function HomePage(): JSX.Element {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-6 w-6 text-primary-600" />
               <div>
-                <h2 className="text-2xl font-bold text-secondary-900">Trending Now</h2>
-                <p className="mt-1 text-secondary-500">Popular events this week</p>
+                <h2 className="text-2xl font-bold text-secondary-900">{t('home.trendingNow')}</h2>
+                <p className="mt-1 text-secondary-500">{t('home.trendingSubtitle')}</p>
               </div>
             </div>
             <Link
               to={ROUTES.EVENTS}
               className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
             >
-              View All
+              {t('common.viewAll')}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -109,13 +116,11 @@ export function HomePage(): JSX.Element {
       {/* CTA */}
       <section className="container-app py-16">
         <div className="rounded-3xl bg-gradient-to-r from-primary-600 to-accent-600 p-12 text-center text-white">
-          <h2 className="text-3xl font-bold">Ready to Host Your Own Event?</h2>
-          <p className="mx-auto mt-3 max-w-lg text-primary-100">
-            Create, manage, and grow your events with powerful tools for ticketing, analytics, live chat and more.
-          </p>
+          <h2 className="text-3xl font-bold">{t('home.ctaTitle')}</h2>
+          <p className="mx-auto mt-3 max-w-lg text-primary-100">{t('home.ctaDescription')}</p>
           <Link to={ROUTES.REGISTER} className="mt-6 inline-block">
             <Button variant="secondary" size="lg">
-              Get Started Free
+              {t('home.getStarted')}
             </Button>
           </Link>
         </div>

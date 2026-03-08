@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Search, X } from 'lucide-react';
 import { classNames } from '@/lib/utils.js';
+import { t } from '@/lib/i18n.js';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -10,7 +11,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
-  placeholder = 'Search events...',
+  placeholder = t('search.placeholder'),
   value = '',
   onSearch,
   className,
@@ -36,14 +37,14 @@ export function SearchBar({
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
         className="input-field pl-10 pr-10"
-        aria-label="Search"
+        aria-label={t('search.label')}
       />
       {query && (
         <button
           type="button"
           onClick={handleClear}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
-          aria-label="Clear search"
+          aria-label={t('search.clear')}
         >
           <X className="h-4 w-4" />
         </button>

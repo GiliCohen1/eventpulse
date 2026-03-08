@@ -9,19 +9,33 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/organisms/Navbar.js';
 import { useUIStore } from '@/stores/ui.store.js';
+import { classNames } from '@/lib/utils.js';
 import { ROUTES } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
 
 interface SidebarLink {
-  label: string;
+  labelKey: string;
   path: string;
   icon: JSX.Element;
 }
 
 const SIDEBAR_LINKS: SidebarLink[] = [
-  { label: 'Overview', path: ROUTES.DASHBOARD, icon: <LayoutDashboard className="h-5 w-5" /> },
-  { label: 'My Events', path: ROUTES.MY_EVENTS, icon: <CalendarDays className="h-5 w-5" /> },
-  { label: 'Analytics', path: ROUTES.DASHBOARD + '/analytics', icon: <BarChart3 className="h-5 w-5" /> },
-  { label: 'Settings', path: ROUTES.DASHBOARD + '/settings', icon: <Settings className="h-5 w-5" /> },
+  {
+    labelKey: 'dashboard.overview',
+    path: ROUTES.DASHBOARD,
+    icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  { labelKey: 'nav.myEvents', path: ROUTES.MY_EVENTS, icon: <CalendarDays className="h-5 w-5" /> },
+  {
+    labelKey: 'dashboard.analytics',
+    path: ROUTES.DASHBOARD + '/analytics',
+    icon: <BarChart3 className="h-5 w-5" />,
+  },
+  {
+    labelKey: 'dashboard.settings',
+    path: ROUTES.DASHBOARD + '/settings',
+    icon: <Settings className="h-5 w-5" />,
+  },
 ];
 
 export function DashboardLayout(): JSX.Element {
@@ -34,10 +48,12 @@ export function DashboardLayout(): JSX.Element {
       <Navbar />
 
       <div className="flex">
+        {/* Desktop sidebar */}
         <aside
-          className={`sticky top-16 h-[calc(100vh-4rem)] border-r border-secondary-200 bg-white transition-all duration-300 ${
-            isSidebarOpen ? 'w-64' : 'w-16'
-          }`}
+          className={classNames(
+            'sticky top-16 hidden h-[calc(100vh-4rem)] border-r border-secondary-200 bg-white transition-all duration-300 md:block',
+            isSidebarOpen ? 'w-64' : 'w-16',
+          )}
         >
           <div className="flex h-full flex-col justify-between py-4">
             <nav className="space-y-1 px-3">
@@ -47,15 +63,16 @@ export function DashboardLayout(): JSX.Element {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    className={classNames(
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       isActive
                         ? 'bg-primary-50 text-primary-700'
-                        : 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900'
-                    }`}
-                    title={!isSidebarOpen ? link.label : undefined}
+                        : 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900',
+                    )}
+                    title={!isSidebarOpen ? t(link.labelKey) : undefined}
                   >
                     {link.icon}
-                    {isSidebarOpen && <span>{link.label}</span>}
+                    {isSidebarOpen && <span>{t(link.labelKey)}</span>}
                   </Link>
                 );
               })}
@@ -64,8 +81,10 @@ export function DashboardLayout(): JSX.Element {
             <div className="px-3">
               <button
                 onClick={toggleSidebar}
-                className="flex w-full items-center justify-center rounded-lg p-2 text-secondary-400 hover:bg-secondary-100 hover:text-secondary-600"
-                aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                className="flex w-full items-center justify-center rounded-lg p-2 text-secondary-400 transition-colors hover:bg-secondary-100 hover:text-secondary-600"
+                aria-label={
+                  isSidebarOpen ? t('dashboard.collapseSidebar') : t('dashboard.expandSidebar')
+                }
               >
                 {isSidebarOpen ? (
                   <ChevronLeft className="h-5 w-5" />
@@ -77,7 +96,27 @@ export function DashboardLayout(): JSX.Element {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 lg:p-8">
+        {/* Mobile bottom tab bar */}
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-secondary-200 bg-white md:hidden">
+          {SIDEBAR_LINKS.map((link) => {
+            const isActive = location.pathname === link.path;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={classNames(
+                  'flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors',
+                  isActive ? 'text-primary-700' : 'text-secondary-500 hover:text-secondary-700',
+                )}
+              >
+                {link.icon}
+                <span>{t(link.labelKey)}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8">
           <Outlet />
         </main>
       </div>

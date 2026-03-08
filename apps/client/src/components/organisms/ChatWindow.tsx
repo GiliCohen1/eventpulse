@@ -4,7 +4,8 @@ import { type IChatMessage } from '@eventpulse/shared-types';
 import { Avatar } from '@/components/atoms/Avatar.js';
 import { Button } from '@/components/atoms/Button.js';
 import { Spinner } from '@/components/atoms/Spinner.js';
-import { formatRelative } from '@/lib/utils.js';
+import { formatRelative, classNames } from '@/lib/utils.js';
+import { t } from '@/lib/i18n.js';
 
 interface ChatWindowProps {
   messages: IChatMessage[];
@@ -50,38 +51,29 @@ export function ChatWindow({
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-secondary-500">
-              No messages yet. Start the conversation!
-            </p>
+            <p className="text-sm text-secondary-500">{t('chat.empty')}</p>
           </div>
         ) : (
           messages.map((msg) => {
-            const isOwnMessage = msg.userId === currentUserId;
+            const isOwnMessage = msg.sender.userId === currentUserId;
+            const displayName = `${msg.sender.firstName} ${msg.sender.lastName}`.trim();
             return (
               <div
                 key={msg.id}
-                className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
+                className={classNames('flex gap-3', isOwnMessage && 'flex-row-reverse')}
               >
-                <Avatar
-                  firstName={msg.userName?.split(' ')[0] ?? ''}
-                  lastName={msg.userName?.split(' ').slice(1).join(' ') ?? ''}
-                  size="sm"
-                />
-                <div className={`max-w-[70%] ${isOwnMessage ? 'text-right' : ''}`}>
+                <Avatar firstName={msg.sender.firstName} lastName={msg.sender.lastName} size="sm" />
+                <div className={classNames('max-w-[70%]', isOwnMessage && 'text-right')}>
                   <div className="mb-1 flex items-baseline gap-2">
                     <span className="text-xs font-medium text-secondary-700">
-                      {msg.userName ?? 'Anonymous'}
+                      {displayName || t('chat.anonymous')}
                     </span>
                     <span className="text-[10px] text-secondary-400">
                       {formatRelative(msg.createdAt)}
                     </span>
                   </div>
                   <div
-                    className={`inline-block rounded-2xl px-4 py-2 text-sm ${
-                      isOwnMessage
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-secondary-100 text-secondary-900'
-                    }`}
+                    className={classNames('message-bubble', isOwnMessage && 'message-bubble--own')}
                   >
                     {msg.content}
                   </div>
@@ -101,7 +93,7 @@ export function ChatWindow({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={t('chat.placeholder')}
           className="flex-1 rounded-full border border-secondary-300 bg-secondary-50 px-4 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
         />
         <Button
@@ -112,7 +104,7 @@ export function ChatWindow({
           disabled={!input.trim()}
           leftIcon={<Send className="h-4 w-4" />}
         >
-          Send
+          {t('common.send')}
         </Button>
       </form>
     </div>

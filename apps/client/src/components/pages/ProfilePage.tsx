@@ -11,21 +11,24 @@ import { Textarea } from '@/components/atoms/Textarea.js';
 import { Button } from '@/components/atoms/Button.js';
 import { Avatar } from '@/components/atoms/Avatar.js';
 import { QUERY_KEYS } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
+import type { IUser } from '@/types';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name required'),
   lastName: z.string().min(2, 'Last name required'),
   bio: z.string().max(500, 'Bio must be under 500 characters').optional(),
-  phoneNumber: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function ProfilePage(): JSX.Element {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s: { user: IUser | null }) => s.user);
   const queryClient = useQueryClient();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user?.avatarUrl);
+  const [avatarPreview, setAvatarPreview] = useState<string | undefined>(
+    user?.avatarUrl ?? undefined,
+  );
 
   const {
     register,
@@ -37,21 +40,20 @@ export function ProfilePage(): JSX.Element {
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
       bio: user?.bio ?? '',
-      phoneNumber: user?.phoneNumber ?? '',
     },
   });
 
   const updateProfile = useMutation({
     mutationFn: (data: ProfileFormData) => userService.updateProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.me() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH_ME });
     },
   });
 
   const uploadAvatar = useMutation({
     mutationFn: (file: File) => userService.uploadAvatar(file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.me() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH_ME });
     },
   });
 
@@ -71,7 +73,7 @@ export function ProfilePage(): JSX.Element {
 
   return (
     <div className="container-app max-w-2xl py-8">
-      <h1 className="mb-8 text-2xl font-bold text-secondary-900">Profile Settings</h1>
+      <h1 className="mb-8 text-2xl font-bold text-secondary-900">{t('profile.title')}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Avatar Section */}
@@ -94,45 +96,37 @@ export function ProfilePage(): JSX.Element {
             </label>
           </div>
           <div>
-            <p className="text-sm font-medium text-secondary-900">Profile Photo</p>
-            <p className="text-xs text-secondary-500">JPG, PNG or WebP. Max 2MB.</p>
+            <p className="text-sm font-medium text-secondary-900">{t('profile.photo')}</p>
+            <p className="text-xs text-secondary-500">{t('profile.photoHint')}</p>
           </div>
         </div>
 
         {/* Form Fields */}
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="First Name"
+            label={t('profile.firstName')}
             error={errors.firstName?.message}
             {...register('firstName')}
           />
           <Input
-            label="Last Name"
+            label={t('profile.lastName')}
             error={errors.lastName?.message}
             {...register('lastName')}
           />
         </div>
 
         <Input
-          label="Email"
+          label={t('profile.email')}
           type="email"
           value={user?.email ?? ''}
           disabled
-          helperText="Email cannot be changed"
-        />
-
-        <Input
-          label="Phone Number"
-          type="tel"
-          placeholder="+1 (555) 000-0000"
-          error={errors.phoneNumber?.message}
-          {...register('phoneNumber')}
+          helperText={t('profile.emailHint')}
         />
 
         <Textarea
-          label="Bio"
+          label={t('profile.bio')}
           rows={4}
-          placeholder="Tell us about yourself..."
+          placeholder={t('profile.bioPlaceholder')}
           error={errors.bio?.message}
           {...register('bio')}
         />
@@ -145,7 +139,7 @@ export function ProfilePage(): JSX.Element {
             disabled={!isDirty && !avatarFile}
             leftIcon={<Save className="h-4 w-4" />}
           >
-            Save Changes
+            {t('common.save')}
           </Button>
         </div>
       </form>

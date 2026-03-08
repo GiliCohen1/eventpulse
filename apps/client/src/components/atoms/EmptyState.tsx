@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button.js';
+import { t } from '@/lib/i18n.js';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -34,19 +35,19 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  message = 'Something went wrong.',
+  message = t('common.somethingWentWrong'),
   onRetry,
 }: ErrorStateProps): JSX.Element {
   return (
     <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 text-center">
       <AlertTriangle className="h-12 w-12 text-error-500" />
       <div>
-        <h3 className="text-lg font-semibold text-secondary-900">Error</h3>
+        <h3 className="text-lg font-semibold text-secondary-900">{t('common.error')}</h3>
         <p className="mt-1 text-sm text-secondary-500">{message}</p>
       </div>
       {onRetry && (
         <Button variant="secondary" onClick={onRetry}>
-          Try Again
+          {t('common.tryAgain')}
         </Button>
       )}
     </div>

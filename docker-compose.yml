@@ -7,7 +7,7 @@ services:
     container_name: eventpulse-postgres
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '5433:5432'
     environment:
       POSTGRES_USER: eventpulse
       POSTGRES_PASSWORD: eventpulse_secret
@@ -112,10 +112,21 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      kafka:
+        condition: service_started
     env_file: .env
     environment:
       PORT: 3000
-      REDIS_URL: redis://:eventpulse_secret@redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eventpulse_secret
+      KAFKA_BROKERS: kafka:29092
+      USER_SERVICE_URL: http://user-service:3001
+      EVENT_SERVICE_URL: http://event-service:3002
+      TICKET_SERVICE_URL: http://ticket-service:3003
+      CHAT_SERVICE_URL: http://chat-service:3004
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+      ANALYTICS_SERVICE_URL: http://analytics-service:3006
 
   user-service:
     build:
@@ -133,7 +144,11 @@ services:
     env_file: .env
     environment:
       PORT: 3001
-      DATABASE_URL: postgresql://eventpulse:eventpulse_secret@postgres:5432/eventpulse
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: eventpulse
+      POSTGRES_PASSWORD: eventpulse_secret
+      POSTGRES_DB: eventpulse
       KAFKA_BROKERS: kafka:29092
 
   event-service:
@@ -147,12 +162,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka:
         condition: service_healthy
     env_file: .env
     environment:
       PORT: 3002
-      DATABASE_URL: postgresql://eventpulse:eventpulse_secret@postgres:5432/eventpulse
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: eventpulse
+      POSTGRES_PASSWORD: eventpulse_secret
+      POSTGRES_DB: eventpulse
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eventpulse_secret
       KAFKA_BROKERS: kafka:29092
 
   ticket-service:
@@ -173,8 +197,14 @@ services:
     env_file: .env
     environment:
       PORT: 3003
-      DATABASE_URL: postgresql://eventpulse:eventpulse_secret@postgres:5432/eventpulse
-      REDIS_URL: redis://:eventpulse_secret@redis:6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: eventpulse
+      POSTGRES_PASSWORD: eventpulse_secret
+      POSTGRES_DB: eventpulse
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eventpulse_secret
       KAFKA_BROKERS: kafka:29092
 
   chat-service:
@@ -195,8 +225,11 @@ services:
     env_file: .env
     environment:
       PORT: 3004
-      MONGODB_URI: mongodb://eventpulse:eventpulse_secret@mongodb:27017/eventpulse_chat?authSource=admin
-      REDIS_URL: redis://:eventpulse_secret@redis:6379
+      MONGO_URI: mongodb://eventpulse:eventpulse_secret@mongodb:27017/?authSource=admin
+      MONGO_DB_CHAT: eventpulse_chat
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eventpulse_secret
       KAFKA_BROKERS: kafka:29092
 
   notification-service:
@@ -208,14 +241,15 @@ services:
     ports:
       - '3005:3005'
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       kafka:
         condition: service_healthy
     env_file: .env
     environment:
       PORT: 3005
-      DATABASE_URL: postgresql://eventpulse:eventpulse_secret@postgres:5432/eventpulse
+      MONGO_URI: mongodb://eventpulse:eventpulse_secret@mongodb:27017/?authSource=admin
+      MONGO_DB_NOTIFICATIONS: eventpulse_notifications
       KAFKA_BROKERS: kafka:29092
 
   analytics-service:
@@ -234,7 +268,8 @@ services:
     env_file: .env
     environment:
       PORT: 3006
-      MONGODB_URI: mongodb://eventpulse:eventpulse_secret@mongodb:27017/eventpulse_analytics?authSource=admin
+      MONGO_URI: mongodb://eventpulse:eventpulse_secret@mongodb:27017/?authSource=admin
+      MONGO_DB_ANALYTICS: eventpulse_analytics
       KAFKA_BROKERS: kafka:29092
 
   # ─── Client ───────────────────────────────────────────────

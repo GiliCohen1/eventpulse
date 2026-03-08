@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth.js';
 import { Input } from '@/components/atoms/Input.js';
 import { Button } from '@/components/atoms/Button.js';
 import { ROUTES } from '@/lib/constants.js';
+import { t } from '@/lib/i18n.js';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -15,7 +16,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginPage(): JSX.Element {
-  const { login, isLoggingIn } = useAuth();
+  const { login, loginError, isLoginPending } = useAuth();
 
   const {
     register,
@@ -31,22 +32,28 @@ export function LoginPage(): JSX.Element {
 
   return (
     <div>
-      <h2 className="mb-6 text-center text-xl font-bold text-secondary-900">
-        Sign in to your account
-      </h2>
+      <h2 className="mb-6 text-center text-xl font-bold text-secondary-900">{t('login.title')}</h2>
+
+      {loginError && (
+        <div className="mb-4 rounded-lg bg-error-50 px-4 py-3 text-sm text-error-700">
+          {loginError.message === 'Request failed with status code 401'
+            ? t('login.invalidCredentials')
+            : t('login.genericError')}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
-          label="Email"
+          label={t('login.email')}
           type="email"
-          placeholder="you@example.com"
+          placeholder={t('login.emailPlaceholder')}
           error={errors.email?.message}
           {...register('email')}
         />
         <Input
-          label="Password"
+          label={t('login.password')}
           type="password"
-          placeholder="••••••••"
+          placeholder={t('login.passwordPlaceholder')}
           error={errors.password?.message}
           {...register('password')}
         />
@@ -56,19 +63,19 @@ export function LoginPage(): JSX.Element {
             to={ROUTES.FORGOT_PASSWORD}
             className="text-sm text-primary-600 hover:text-primary-700"
           >
-            Forgot password?
+            {t('login.forgotPassword')}
           </Link>
         </div>
 
-        <Button type="submit" variant="primary" isLoading={isLoggingIn} className="w-full">
-          Sign In
+        <Button type="submit" variant="primary" isLoading={isLoginPending} className="w-full">
+          {t('common.signIn')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-secondary-500">
-        Don't have an account?{' '}
+        {t('login.noAccount')}{' '}
         <Link to={ROUTES.REGISTER} className="font-medium text-primary-600 hover:text-primary-700">
-          Sign up
+          {t('login.signUpLink')}
         </Link>
       </p>
     </div>
