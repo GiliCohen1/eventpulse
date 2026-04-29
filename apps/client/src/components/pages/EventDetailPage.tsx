@@ -260,6 +260,7 @@ export function EventDetailPage(): JSX.Element {
                           size="sm"
                           disabled={soldOut || !isAuthenticated}
                           isLoading={registerMutation.isPending}
+                          title={soldOut ? t('common.soldOut') : t('common.register')}
                           onClick={() => registerMutation.mutate(tier.id)}
                         >
                           {soldOut ? t('common.soldOut') : t('common.register')}
@@ -282,6 +283,7 @@ export function EventDetailPage(): JSX.Element {
             {/* Share */}
             <button
               onClick={handleShare}
+              title={t('common.shareEvent')}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-secondary-200 bg-white py-3 text-sm font-medium text-secondary-700 transition-colors hover:bg-secondary-50"
             >
               {copied ? (

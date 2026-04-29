@@ -10,7 +10,6 @@ import {
   Max,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import type { EventStatus } from '@eventpulse/shared-types';
 
 export class QueryEventsDto {
   @ApiPropertyOptional({ description: 'Full-text search query' })
@@ -23,10 +22,12 @@ export class QueryEventsDto {
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ enum: ['draft', 'published', 'live', 'ended', 'cancelled', 'archived'] })
+  @ApiPropertyOptional({
+    description: 'Filter by status or comma-separated statuses (e.g. "published,live")',
+  })
   @IsOptional()
-  @IsEnum(['draft', 'published', 'live', 'ended', 'cancelled', 'archived'])
-  status?: EventStatus;
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({ description: 'Events starting after this date' })
   @IsOptional()

@@ -138,6 +138,37 @@
   .stat-trend--down {
     @apply text-xs font-medium text-error-600;
   }
+
+  /* Absolute icon/action button inside an input field */
+  .icon-input-btn {
+    @apply absolute top-1/2 -translate-y-1/2
+      text-secondary-400 hover:text-secondary-600
+      focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-primary-500 rounded;
+  }
+
+  /* Filter dropdown trigger button */
+  .filter-dropdown-trigger {
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-secondary-300
+      bg-white px-3 py-2 text-sm font-medium text-secondary-700
+      hover:border-secondary-400 hover:bg-secondary-50
+      transition-colors duration-150
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500;
+  }
+
+  /* Filter dropdown menu panel */
+  .filter-dropdown-menu {
+    @apply absolute left-0 z-20 mt-1 min-w-[14rem] rounded-xl border border-secondary-200
+      bg-white shadow-lg p-2 space-y-0.5
+      max-h-64 overflow-y-auto;
+  }
+
+  /* Checkbox row inside a filter dropdown */
+  .filter-checkbox-label {
+    @apply flex cursor-pointer select-none items-center gap-2 rounded-md
+      px-2 py-1.5 text-sm text-secondary-700
+      hover:bg-secondary-50 transition-colors duration-100;
+  }
 }
 
 @layer utilities {

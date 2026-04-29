@@ -8,15 +8,29 @@ interface NotificationsResponse {
 }
 
 export const notificationService = {
-  async list(params: { isRead?: boolean; type?: string; page?: number; limit?: number } = {}): Promise<NotificationsResponse> {
+  async list(
+    params: { isRead?: boolean; type?: string; page?: number; limit?: number } = {},
+  ): Promise<NotificationsResponse> {
     const qs = buildQueryString(params as Record<string, unknown>);
     const { data } = await apiClient.get(`/notifications${qs}`);
-    return data.data;
+    const raw = data.data;
+    // Real API: { data: Notification[], total, page, limit }
+    // Demo API: { notifications: [...], pagination: {...} }
+    if (raw.notifications) return raw;
+    return {
+      notifications: raw.data ?? [],
+      pagination: {
+        total: raw.total ?? 0,
+        page: raw.page ?? 1,
+        limit: raw.limit ?? 20,
+      } as PaginationMeta,
+    };
   },
 
   async getUnreadCount(): Promise<number> {
     const { data } = await apiClient.get('/notifications/unread-count');
-    return data.data.count;
+    const raw = data.data;
+    return typeof raw === 'number' ? raw : (raw?.count ?? 0);
   },
 
   async markAsRead(id: string): Promise<void> {
@@ -29,11 +43,13 @@ export const notificationService = {
 
   async getPreferences(): Promise<INotificationPreferences> {
     const { data } = await apiClient.get('/notifications/preferences');
-    return data.data.preferences;
+    return data.data?.preferences ?? data.data;
   },
 
-  async updatePreferences(prefs: Partial<INotificationPreferences>): Promise<INotificationPreferences> {
+  async updatePreferences(
+    prefs: Partial<INotificationPreferences>,
+  ): Promise<INotificationPreferences> {
     const { data } = await apiClient.put('/notifications/preferences', prefs);
-    return data.data.preferences;
+    return data.data?.preferences ?? data.data;
   },
 };

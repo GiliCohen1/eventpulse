@@ -16,7 +16,6 @@ RUN npm install --ignore-scripts --no-audit --no-fund
 # ── Build stage ─────────────────────────────────────────
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api-gateway/node_modules ./apps/api-gateway/node_modules
 COPY . .
 RUN npm run build --workspace=libs/shared-types \
  && npm run build --workspace=libs/common \

@@ -24,12 +24,12 @@ export const authService = {
 
   async getMe(): Promise<IUser> {
     const { data } = await apiClient.get('/auth/me');
-    return data.data.user;
+    return data.data?.user ?? data.data;
   },
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     const { data } = await apiClient.post('/auth/refresh', { refreshToken });
-    return data.data.tokens;
+    return data.data?.tokens ?? data.data;
   },
 
   async forgotPassword(email: string): Promise<void> {
@@ -41,7 +41,7 @@ export const authService = {
   },
 
   async googleAuth(code: string): Promise<AuthResponse> {
-    const { data } = await apiClient.post('/auth/google', { code });
+    const { data } = await apiClient.post('/auth/google', { token: code });
     return data.data;
   },
 };

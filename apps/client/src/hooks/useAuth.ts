@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store.js';
 import { authService } from '@/services/auth.service.js';
@@ -9,14 +9,6 @@ export function useAuth() {
   const { user, isAuthenticated, isLoading, setAuth, clearAuth, initialize } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  useQuery({
-    queryKey: QUERY_KEYS.AUTH_ME,
-    queryFn: () => authService.getMe(),
-    enabled: isAuthenticated,
-    retry: false,
-    staleTime: 1000 * 60 * 10,
-  });
 
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),

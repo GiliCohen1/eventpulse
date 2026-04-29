@@ -128,7 +128,7 @@
     "emailPlaceholder": "you@example.com",
     "password": "Password",
     "passwordPlaceholder": "••••••••",
-    "passwordHint": "At least 8 characters, one uppercase, one number",
+    "passwordHint": "At least 8 characters, one uppercase, one lowercase, one number, one special character (@$!%*?&)",
     "confirmPassword": "Confirm Password",
     "roleLabel": "I want to",
     "attendEvents": "Attend Events",

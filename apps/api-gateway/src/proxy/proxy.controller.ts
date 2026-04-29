@@ -41,11 +41,19 @@ export class ProxyController {
     ];
   }
 
+  private resolveRoute(path: string): ServiceRoute | undefined {
+    if (/^\/api\/v1\/events\/[^/]+\/(register|attendees)(\/.*)?$/i.test(path)) {
+      return this.serviceRoutes.find((r) => r.prefix === '/registrations');
+    }
+
+    return this.serviceRoutes.find((r) => path.startsWith(`/api/v1${r.prefix}`));
+  }
+
   @Public()
   @All('*')
   async proxyRequest(@Req() req: Request, @Res() res: Response): Promise<void> {
     const path = req.path;
-    const route = this.serviceRoutes.find((r) => path.startsWith(`/api/v1${r.prefix}`));
+    const route = this.resolveRoute(path);
 
     if (!route) {
       res.status(HttpStatus.NOT_FOUND).json({
@@ -58,15 +66,24 @@ export class ProxyController {
       return;
     }
 
-    this.logger.debug(`Proxying ${req.method} ${path} → ${route.target}`);
+    // Strip the /api/v1 prefix before forwarding — downstream services
+    // register routes without a global prefix (e.g. /events, /users).
+    const downstreamPath = path.replace(/^\/api\/v1/, '');
+    this.logger.debug(`Proxying ${req.method} ${path} → ${route.target}${downstreamPath}`);
 
     // In production, use http-proxy-middleware or a proper reverse proxy.
     // This is a simplified proxy for development scaffolding.
     try {
-      const targetUrl = `${route.target}${path}`;
-      const headers: Record<string, string> = {
-        'content-type': req.headers['content-type'] ?? 'application/json',
-      };
+      // Preserve original query string
+      const qs = req.originalUrl.includes('?')
+        ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
+        : '';
+      const targetUrl = `${route.target}${downstreamPath}${qs}`;
+      const headers: Record<string, string> = {};
+
+      if (req.headers['content-type']) {
+        headers['content-type'] = req.headers['content-type'];
+      }
 
       if (req.headers.authorization) {
         headers['authorization'] = req.headers.authorization;
@@ -76,14 +93,35 @@ export class ProxyController {
         headers['x-correlation-id'] = req.headers['x-correlation-id'] as string;
       }
 
+      const isBodylessMethod = ['GET', 'HEAD'].includes(req.method);
+      const isMultipart =
+        typeof req.headers['content-type'] === 'string' &&
+        req.headers['content-type'].includes('multipart/form-data');
+
       const response = await fetch(targetUrl, {
         method: req.method,
         headers,
-        body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+        body: isBodylessMethod
+          ? undefined
+          : isMultipart
+            ? (req as unknown as ReadableStream)
+            : JSON.stringify(req.body),
+        ...(isBodylessMethod || !isMultipart ? {} : { duplex: 'half' as const }),
       });
 
-      const data = await response.json();
-      res.status(response.status).json(data);
+      const responseContentType = response.headers.get('content-type') ?? '';
+
+      if (responseContentType.includes('application/json')) {
+        const data = await response.json();
+        res.status(response.status).json(data);
+        return;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      if (responseContentType) {
+        res.setHeader('content-type', responseContentType);
+      }
+      res.status(response.status).send(Buffer.from(arrayBuffer));
     } catch (error) {
       this.logger.error(`Proxy error for ${path}:`, error);
       res.status(HttpStatus.BAD_GATEWAY).json({

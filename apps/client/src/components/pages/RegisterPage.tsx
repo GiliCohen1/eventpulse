@@ -9,6 +9,17 @@ import { ROUTES } from '@/lib/constants.js';
 import { classNames } from '@/lib/utils.js';
 import { t } from '@/lib/i18n.js';
 
+/** Extract usable message text from an unknown mutation error. */
+function getErrorMessage(error: Error | null): string | null {
+  if (!error) return null;
+  // AxiosError shape: error.response.data.message (string | string[])
+  const axiosError = error as Error & { response?: { data?: { message?: unknown } } };
+  const msg = axiosError.response?.data?.message;
+  if (Array.isArray(msg) && msg.length > 0) return String(msg[0]);
+  if (typeof msg === 'string' && msg) return msg;
+  return null;
+}
+
 const registerSchema = z
   .object({
     firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -18,7 +29,9 @@ const registerSchema = z
       .string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-      .regex(/[0-9]/, 'Password must contain a number'),
+      .regex(/[a-z]/, 'Password must contain a lowercase letter')
+      .regex(/[0-9]/, 'Password must contain a number')
+      .regex(/[@$!%*?&]/, 'Password must contain a special character (@$!%*?&)'),
     confirmPassword: z.string(),
     role: z.enum(['attendee', 'organizer']),
   })
@@ -64,7 +77,7 @@ export function RegisterPage(): JSX.Element {
         <div className="mb-4 rounded-lg bg-error-50 px-4 py-3 text-sm text-error-700">
           {registerError.message === 'Request failed with status code 409'
             ? t('register.emailExists')
-            : t('register.genericError')}
+            : (getErrorMessage(registerError) ?? t('register.genericError'))}
         </div>
       )}
 

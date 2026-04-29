@@ -24,6 +24,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function ProfilePage(): JSX.Element {
   const user = useAuthStore((s: { user: IUser | null }) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const queryClient = useQueryClient();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(
@@ -45,14 +46,16 @@ export function ProfilePage(): JSX.Element {
 
   const updateProfile = useMutation({
     mutationFn: (data: ProfileFormData) => userService.updateProfile(data),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH_ME });
     },
   });
 
   const uploadAvatar = useMutation({
     mutationFn: (file: File) => userService.uploadAvatar(file),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH_ME });
     },
   });
@@ -85,7 +88,10 @@ export function ProfilePage(): JSX.Element {
               lastName={user?.lastName ?? ''}
               size="lg"
             />
-            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white shadow-md hover:bg-primary-700">
+            <label
+              title={t('profile.photo')}
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white shadow-md hover:bg-primary-700"
+            >
               <Camera className="h-4 w-4" />
               <input
                 type="file"

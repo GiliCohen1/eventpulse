@@ -81,9 +81,10 @@ export function MyTicketsPage(): JSX.Element {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => cancelMutation.mutate(reg.id)}
+                  onClick={() => cancelMutation.mutate(reg.eventId)}
                   isLoading={cancelMutation.isPending}
                   leftIcon={<XCircle className="h-4 w-4" />}
+                  title={t('myTickets.cancel')}
                   className="text-error-600 hover:text-error-700"
                 >
                   {t('myTickets.cancel')}

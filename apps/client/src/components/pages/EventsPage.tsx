@@ -1,38 +1,55 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useEvents, useCategories } from '@/hooks/useEvents.js';
 import { EventList } from '@/components/organisms/EventList.js';
 import { SearchBar } from '@/components/molecules/SearchBar.js';
-import { Button } from '@/components/atoms/Button.js';
-import { Badge } from '@/components/atoms/Badge.js';
+import { FilterDropdown } from '@/components/molecules/FilterDropdown.js';
 import { t } from '@/lib/i18n.js';
 import { type EventStatus } from '@eventpulse/shared-types';
 
+const STATUS_OPTIONS: EventStatus[] = ['published', 'live', 'ended'];
+
+function parseCsvParam(value: string | null): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 export function EventsPage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<'category' | 'status' | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const search = searchParams.get('search') ?? '';
-  const category = searchParams.get('category') ?? '';
-  const status = (searchParams.get('status') ?? '') as EventStatus | '';
+  const categoryParam = searchParams.get('category');
+  const statusParam = searchParams.get('status');
+  const selectedCategories = useMemo(() => parseCsvParam(categoryParam), [categoryParam]);
+  const selectedStatuses = useMemo(
+    () => parseCsvParam(statusParam) as EventStatus[],
+    [statusParam],
+  );
 
-  const { data, isLoading, isError } = useEvents({
+  const { data, isLoading, isFetching, isError } = useEvents({
     q: search || undefined,
-    category: category || undefined,
-    status: status || undefined,
+    category: selectedCategories.length > 0 ? selectedCategories : undefined,
+    status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
     page: 1,
     limit: 24,
   });
+  const events = data?.events;
 
   const { data: categories } = useCategories();
 
   const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (category) count++;
-    if (status) count++;
-    return count;
-  }, [category, status]);
+    return selectedCategories.length + selectedStatuses.length;
+  }, [selectedCategories, selectedStatuses]);
+
+  const allCategoriesSelected =
+    !!categories && categories.length > 0 && selectedCategories.length === categories.length;
+  const allStatusesSelected = selectedStatuses.length === STATUS_OPTIONS.length;
 
   function updateParam(key: string, value: string): void {
     const next = new URLSearchParams(searchParams);
@@ -41,11 +58,57 @@ export function EventsPage(): JSX.Element {
     } else {
       next.delete(key);
     }
-    setSearchParams(next);
+    if (next.toString() === searchParams.toString()) return;
+    startTransition(() => {
+      setSearchParams(next);
+    });
+  }
+
+  function updateMultiParam(key: string, values: string[]): void {
+    const normalized = [...new Set(values)].sort();
+    const next = new URLSearchParams(searchParams);
+    if (normalized.length > 0) {
+      next.set(key, normalized.join(','));
+    } else {
+      next.delete(key);
+    }
+    if (next.toString() === searchParams.toString()) return;
+    startTransition(() => {
+      setSearchParams(next);
+    });
+  }
+
+  function toggleCategory(slug: string): void {
+    const nextValues = selectedCategories.includes(slug)
+      ? selectedCategories.filter((v) => v !== slug)
+      : [...selectedCategories, slug];
+    updateMultiParam('category', nextValues);
+  }
+
+  function toggleStatus(nextStatus: EventStatus): void {
+    const nextValues = selectedStatuses.includes(nextStatus)
+      ? selectedStatuses.filter((v) => v !== nextStatus)
+      : [...selectedStatuses, nextStatus];
+    updateMultiParam('status', nextValues);
+  }
+
+  function toggleAllCategories(checked: boolean): void {
+    if (!categories) return;
+    updateMultiParam('category', checked ? categories.map((cat) => cat.slug) : []);
+  }
+
+  function toggleAllStatuses(checked: boolean): void {
+    updateMultiParam('status', checked ? STATUS_OPTIONS : []);
   }
 
   function clearFilters(): void {
-    setSearchParams(search ? { search } : {});
+    const next = new URLSearchParams();
+    if (search) {
+      next.set('search', search);
+    }
+    startTransition(() => {
+      setSearchParams(next);
+    });
   }
 
   return (
@@ -55,7 +118,7 @@ export function EventsPage(): JSX.Element {
         <p className="mt-2 text-secondary-500">{t('events.subtitle')}</p>
       </div>
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1">
           <SearchBar
             value={search}
@@ -63,70 +126,85 @@ export function EventsPage(): JSX.Element {
             placeholder={t('events.searchPlaceholder')}
           />
         </div>
-        <Button
-          variant="ghost"
-          onClick={() => setShowFilters(!showFilters)}
-          leftIcon={<SlidersHorizontal className="h-4 w-4" />}
-        >
-          {t('common.filters')}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterDropdown
+            label={t('events.category')}
+            selectedCount={selectedCategories.length}
+            isOpen={openDropdown === 'category'}
+            onToggle={() => setOpenDropdown(openDropdown === 'category' ? null : 'category')}
+            onClose={() => setOpenDropdown(null)}
+          >
+            <label className="filter-checkbox-label">
+              <input
+                type="checkbox"
+                checked={allCategoriesSelected}
+                onChange={(e) => toggleAllCategories(e.target.checked)}
+              />
+              {t('events.allCategories')}
+            </label>
+            {categories?.map((cat) => (
+              <label key={cat.id} className="filter-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(cat.slug)}
+                  onChange={() => toggleCategory(cat.slug)}
+                />
+                {cat.name}
+              </label>
+            ))}
+          </FilterDropdown>
+
+          <FilterDropdown
+            label={t('events.status')}
+            selectedCount={selectedStatuses.length}
+            isOpen={openDropdown === 'status'}
+            onToggle={() => setOpenDropdown(openDropdown === 'status' ? null : 'status')}
+            onClose={() => setOpenDropdown(null)}
+          >
+            <label className="filter-checkbox-label">
+              <input
+                type="checkbox"
+                checked={allStatusesSelected}
+                onChange={(e) => toggleAllStatuses(e.target.checked)}
+              />
+              {t('events.allStatuses')}
+            </label>
+            {STATUS_OPTIONS.map((status) => (
+              <label key={status} className="filter-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={selectedStatuses.includes(status)}
+                  onChange={() => toggleStatus(status)}
+                />
+                {status === 'published'
+                  ? t('events.published')
+                  : status === 'live'
+                    ? t('events.liveNow')
+                    : t('events.ended')}
+              </label>
+            ))}
+          </FilterDropdown>
+
           {activeFilterCount > 0 && (
-            <Badge variant="primary" className="ml-2">
-              {activeFilterCount}
-            </Badge>
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-xs text-secondary-500 hover:text-secondary-700"
+            >
+              <X className="h-3 w-3" />
+              {t('common.clearAll')}
+            </button>
           )}
-        </Button>
+        </div>
       </div>
 
-      {showFilters && (
-        <div className="mb-6 rounded-xl border border-secondary-200 bg-white p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-secondary-700">{t('common.filters')}</h3>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-xs text-secondary-500 hover:text-secondary-700"
-              >
-                <X className="h-3 w-3" />
-                {t('common.clearAll')}
-              </button>
-            )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="label">{t('events.category')}</label>
-              <select
-                value={category}
-                onChange={(e) => updateParam('category', e.target.value)}
-                className="input-field"
-              >
-                <option value="">{t('events.allCategories')}</option>
-                {categories?.map((cat) => (
-                  <option key={cat.id} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">{t('events.status')}</label>
-              <select
-                value={status}
-                onChange={(e) => updateParam('status', e.target.value)}
-                className="input-field"
-              >
-                <option value="">{t('events.allStatuses')}</option>
-                <option value="published">{t('events.published')}</option>
-                <option value="live">{t('events.liveNow')}</option>
-                <option value="ended">{t('events.ended')}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+      {(isFetching || isPending) && events?.length ? (
+        <div className="mb-3 text-xs text-secondary-500">Updating results…</div>
+      ) : null}
 
       <EventList
-        events={data?.events}
-        isLoading={isLoading}
+        events={events}
+        isLoading={isLoading && !events}
         isError={isError}
         emptyTitle={t('events.noEventsFound')}
         emptyDescription={

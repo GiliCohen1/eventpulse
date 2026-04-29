@@ -28,8 +28,8 @@ export interface SelectOption {
 
 export interface EventFilters {
   q?: string;
-  category?: string;
-  status?: string;
+  category?: string | string[];
+  status?: string | string[];
   startDate?: string;
   endDate?: string;
   lat?: number;

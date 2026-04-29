@@ -7,6 +7,7 @@ export function useEvents(filters: EventFilters = {}) {
   return useQuery({
     queryKey: [...QUERY_KEYS.EVENTS, filters],
     queryFn: () => eventService.list(filters),
+    placeholderData: (previousData) => previousData,
   });
 }
 

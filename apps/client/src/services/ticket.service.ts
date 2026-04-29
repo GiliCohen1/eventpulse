@@ -1,30 +1,12 @@
 import { apiClient } from './api-client.js';
 import type { IRegistration } from '@/types';
 
-interface RegistrationResponse {
-  registration: IRegistration & {
-    event: { id: string; title: string; startsAt: string };
-    ticketTier: { id: string; name: string; price: number };
-    payment: {
-      id: string;
-      amount: number;
-      currency: string;
-      status: string;
-      transactionId: string;
-      method: string;
-    };
-    ticket: {
-      ticketCode: string;
-      qrCodeUrl: string;
-      issuedAt: string;
-    };
-  };
-}
-
 export const ticketService = {
-  async register(eventId: string, ticketTierId: string): Promise<RegistrationResponse> {
+  async register(eventId: string, ticketTierId: string) {
     const { data } = await apiClient.post(`/events/${eventId}/register`, { ticketTierId });
-    return data.data;
+    const raw = data.data;
+    // Real API returns flat Registration; demo-api may wrap in { registration: ... }
+    return raw?.registration ?? raw;
   },
 
   async cancelRegistration(eventId: string): Promise<void> {
@@ -33,12 +15,14 @@ export const ticketService = {
 
   async getMyRegistrations(): Promise<IRegistration[]> {
     const { data } = await apiClient.get('/registrations/me');
-    return data.data.registrations;
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.registrations ?? []);
   },
 
-  async getRegistration(id: string): Promise<RegistrationResponse> {
+  async getRegistration(id: string) {
     const { data } = await apiClient.get(`/registrations/${id}`);
-    return data.data;
+    const raw = data.data;
+    return raw?.registration ?? raw;
   },
 
   async checkIn(ticketCode: string): Promise<void> {
@@ -47,6 +31,7 @@ export const ticketService = {
 
   async getEventAttendees(eventId: string): Promise<unknown[]> {
     const { data } = await apiClient.get(`/events/${eventId}/attendees`);
-    return data.data.attendees;
+    const raw = data.data;
+    return Array.isArray(raw) ? raw : (raw?.attendees ?? []);
   },
 };

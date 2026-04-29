@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { Event } from './entities/event.entity.js';
@@ -159,26 +159,70 @@ export class EventsService {
       qb.andWhere('(event.title ILIKE :q OR event.description ILIKE :q)', { q: `%${query.q}%` });
     }
 
-    // Category filter (ID or slug)
-    if (query.category) {
-      qb.andWhere('(event.category_id = :categoryId OR category.slug = :categorySlug)', {
-        categoryId: query.category,
-        categorySlug: query.category,
-      });
+    // Category filter (single or comma-separated IDs/slugs)
+    const categoryFilters = (query.category ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (categoryFilters.length > 0) {
+      qb.andWhere(
+        new Brackets((categoryGroup) => {
+          categoryFilters.forEach((categoryFilter, index) => {
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              categoryFilter,
+            );
+
+            if (isUuid) {
+              const key = `categoryId${index}`;
+              const clause = `(event.category_id = :${key} OR category.parent_id = :${key})`;
+              if (index === 0) {
+                categoryGroup.where(clause, { [key]: categoryFilter });
+              } else {
+                categoryGroup.orWhere(clause, { [key]: categoryFilter });
+              }
+              return;
+            }
+
+            const key = `categorySlug${index}`;
+            const clause = `(category.slug = :${key} OR category.parent_id IN (
+                SELECT pc.id FROM categories pc WHERE pc.slug = :${key}
+              ))`;
+            if (index === 0) {
+              categoryGroup.where(clause, { [key]: categoryFilter });
+            } else {
+              categoryGroup.orWhere(clause, { [key]: categoryFilter });
+            }
+          });
+        }),
+      );
     }
 
-    // Status filter
-    if (query.status) {
-      qb.andWhere('event.status = :status', { status: query.status });
+    // Status filter (single or comma-separated)
+    const allowedStatuses: EventStatus[] = [
+      'draft',
+      'published',
+      'live',
+      'ended',
+      'cancelled',
+      'archived',
+    ];
+    const statuses = (query.status ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value): value is EventStatus => allowedStatuses.includes(value as EventStatus));
+
+    if (statuses.length > 0) {
+      qb.andWhere('event.status IN (:...statuses)', { statuses });
     }
 
     // Date range
     if (query.startDate) {
-      qb.andWhere('event.starts_at >= :startDate', { startDate: query.startDate });
+      qb.andWhere('event.startsAt >= :startDate', { startDate: query.startDate });
     }
 
     if (query.endDate) {
-      qb.andWhere('event.ends_at <= :endDate', { endDate: query.endDate });
+      qb.andWhere('event.endsAt <= :endDate', { endDate: query.endDate });
     }
 
     // Online filter
@@ -211,25 +255,27 @@ export class EventsService {
 
     switch (sortBy) {
       case 'startsAt':
-        qb.orderBy('event.starts_at', sortOrder);
+        qb.orderBy('event.startsAt', sortOrder);
         break;
       case 'createdAt':
-        qb.orderBy('event.created_at', sortOrder);
+        qb.orderBy('event.createdAt', sortOrder);
         break;
       case 'registeredCount':
-        qb.orderBy('event.registered_count', sortOrder);
+        qb.orderBy('event.registeredCount', sortOrder);
         break;
       case 'title':
         qb.orderBy('event.title', sortOrder);
         break;
       default:
-        qb.orderBy('event.starts_at', sortOrder);
+        qb.orderBy('event.startsAt', sortOrder);
     }
   }
 
   // ── Trending ──
 
-  async findTrending(limitCount: number = 10): Promise<Event[]> {
+  async findTrending(limitCount?: number): Promise<Event[]> {
+    const safeLimit = Number.isFinite(limitCount) ? limitCount! : 10;
+
     const cached = await this.redis.get(TRENDING_CACHE_KEY);
 
     if (cached) {
@@ -241,9 +287,9 @@ export class EventsService {
       .leftJoinAndSelect('event.category', 'category')
       .leftJoinAndSelect('event.ticketTiers', 'tier')
       .where('event.status IN (:...statuses)', { statuses: ['published', 'live'] })
-      .andWhere('event.starts_at > NOW()')
-      .orderBy('event.registered_count', 'DESC')
-      .limit(limitCount)
+      .andWhere('event.startsAt > NOW()')
+      .orderBy('event.registeredCount', 'DESC')
+      .limit(safeLimit)
       .getMany();
 
     await this.redis.setex(TRENDING_CACHE_KEY, TRENDING_CACHE_TTL, JSON.stringify(events));
@@ -270,7 +316,7 @@ export class EventsService {
         `(6371 * acos(cos(radians(:lat)) * cos(radians(event.latitude)) * cos(radians(event.longitude) - radians(:lng)) + sin(radians(:lat)) * sin(radians(event.latitude)))) <= :radius`,
         { lat, lng, radius },
       )
-      .orderBy('event.starts_at', 'ASC')
+      .orderBy('event.startsAt', 'ASC')
       .limit(limitCount)
       .getMany();
   }
@@ -545,7 +591,7 @@ export class EventsService {
       .leftJoinAndSelect('event.ticketTiers', 'tier')
       .where('reg.user_id = :userId', { userId })
       .andWhere('reg.status IN (:...statuses)', { statuses: ['confirmed', 'checked_in'] })
-      .orderBy('event.starts_at', 'ASC')
+      .orderBy('event.startsAt', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from '@/components/templates/MainLayout.js';
 import { AuthLayout } from '@/components/templates/AuthLayout.js';
 import { DashboardLayout } from '@/components/templates/DashboardLayout.js';
@@ -14,6 +14,7 @@ import {
   NotificationsPage,
   DashboardPage,
   MyEventsPage,
+  ForgotPasswordPage,
   NotFoundPage,
 } from '@/components/pages/index.js';
 import { AuthGuard } from './AuthGuard.js';
@@ -89,6 +90,7 @@ export function AppRoutes(): JSX.Element {
       >
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
       </Route>
 
       {/* Dashboard routes (organizer only) */}

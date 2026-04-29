@@ -9,4 +9,5 @@ export { EventCreatePage } from './EventCreatePage.js';
 export { NotificationsPage } from './NotificationsPage.js';
 export { DashboardPage } from './DashboardPage.js';
 export { MyEventsPage } from './MyEventsPage.js';
+export { ForgotPasswordPage } from './ForgotPasswordPage.js';
 export { NotFoundPage } from './NotFoundPage.js';
